@@ -1,0 +1,3 @@
+# Ignore the data directory and JSON files
+/data/
+.json
