@@ -1,4 +1,5 @@
-from service import create_user, list_users
+from file import load_data, save_data
+from service import create_user, list_users, initialize_users, get_users_data
 
 
 def show_menu():
@@ -12,7 +13,7 @@ def show_menu():
 
 
 def request_user():
-    print("\n── Nuevo usuario ──")
+    print("\n-- Nuevo usuario --")
     id_input = input("ID: ").strip()
     name_input = input("Nombre: ").strip()
     email_input = input("Correo: ").strip()
@@ -22,13 +23,13 @@ def request_user():
     success, message = create_user(id_input, name_input, email_input, age_input, status_input)
 
     if success:
-        print(f"\n✔ {message}")
+        print(f"\nOK: {message}")
     else:
-        print(f"\n✘ Error: {message}")
+        print(f"\nError: {message}")
 
 
 def show_users():
-    print("\n── Usuarios registrados ──")
+    print("\n-- Usuarios registrados --")
     summary = list_users()
 
     if not summary:
@@ -39,7 +40,14 @@ def show_users():
 
 
 def main():
+    loaded_records = load_data()
+    initialize_users(loaded_records)
+
+    if not loaded_records:
+        create_user("1", "Usuario Demo", "demo@correo.com", "20", "Activo")
+
     print("Sistema listo")
+    show_users()
 
     while True:
         show_menu()
@@ -48,6 +56,7 @@ def main():
             option = input("Elige una opción: ").strip()
         except KeyboardInterrupt:
             print("\n\nPrograma interrumpido. ¡Hasta luego!")
+            save_data(get_users_data())
             break
 
         if option == "1":
@@ -55,10 +64,11 @@ def main():
         elif option == "2":
             show_users()
         elif option == "0":
+            save_data(get_users_data())
             print("\n¡Hasta luego!")
             break
         else:
-            print("\n⚠ Opción no válida. Intenta de nuevo.")
+            print("\nOpcion no valida. Intenta de nuevo.")
 
 
 if __name__ == "__main__":

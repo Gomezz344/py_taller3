@@ -10,6 +10,19 @@ users = []
 registered_ids = set()
 
 
+def initialize_users(initial_data):
+    users.clear()
+    registered_ids.clear()
+
+    for item in initial_data:
+        if not isinstance(item, dict):
+            continue
+        user_id = item.get("id")
+        if isinstance(user_id, int):
+            users.append(item)
+            registered_ids.add(user_id)
+
+
 def create_user(id, name, email, age, status):
     ok, id_val = validate_id(id, registered_ids)
     if not ok:
@@ -55,3 +68,7 @@ def list_users():
         summary.append(line)
 
     return summary
+
+
+def get_users_data():
+    return users
