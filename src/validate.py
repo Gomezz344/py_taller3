@@ -1,5 +1,7 @@
 import re
 
+VALID_STATUSES = {"Activo", "Inactivo"}
+
 
 def validate_id(user_id, existing_ids):
     try:
@@ -9,7 +11,7 @@ def validate_id(user_id, existing_ids):
         if user_id in existing_ids:
             return False, f"El ID {user_id} ya existe. Usa uno diferente."
         return True, user_id
-    except ValueError:
+    except (ValueError, TypeError):
         return False, "El ID debe ser un número entero."
 
 
@@ -36,12 +38,14 @@ def validate_age(age):
         if age < 1 or age > 100:
             return False, "La edad debe estar entre 1 y 100 años."
         return True, age
-    except ValueError:
+    except (ValueError, TypeError):
         return False, "La edad debe ser un número entero."
 
 
 def validate_status(status):
-    if status == "Activo":
-        return True, status
-    else:
-        return False, "Inactivo"
+    status = status.strip().capitalize() if isinstance(status, str) else ""
+    # Normalizar: "activo" -> "Activo", "inactivo" -> "Inactivo"
+    for valid in VALID_STATUSES:
+        if status.lower() == valid.lower():
+            return True, valid
+    return False, f"Estado no válido. Usa: {', '.join(sorted(VALID_STATUSES))}."

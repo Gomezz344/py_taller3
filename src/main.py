@@ -1,56 +1,38 @@
 from file import load_data, save_data
-from service import create_user, list_users, initialize_users, get_users_data
-
-
-def show_menu():
-    print("\n" + "=" * 40)
-    print("       SISTEMA DE GESTIÓN DE USUARIOS")
-    print("=" * 40)
-    print("  1. Crear usuario")
-    print("  2. Listar usuarios")
-    print("  0. Salir")
-    print("=" * 40)
-
-
-def request_user():
-    print("\n-- Nuevo usuario --")
-    id_input = input("ID: ").strip()
-    name_input = input("Nombre: ").strip()
-    email_input = input("Correo: ").strip()
-    age_input = input("Edad: ").strip()
-    status_input = input("Estado: ").strip()
-
-    success, message = create_user(id_input, name_input, email_input, age_input, status_input)
-
-    if success:
-        print(f"\nOK: {message}")
-    else:
-        print(f"\nError: {message}")
-
-
-def show_users():
-    print("\n-- Usuarios registrados --")
-    summary = list_users()
-
-    if not summary:
-        print("No hay usuarios registrados aún.")
-    else:
-        for line in summary:
-            print(" •", line)
+from service import (
+    initialize_users,
+    get_users_data,
+    new_register,
+    list_records,
+    search_record,
+    update_record,
+    delete_record,
+    create_user,          # alias — usado solo en demo inicial
+)
+from menu import (
+    show_main_menu,
+    prompt_new_user,
+    prompt_search,
+    prompt_update,
+    prompt_delete,
+    print_result,
+)
 
 
 def main():
+    # Cargar datos persistidos e inicializar en memoria
     loaded_records = load_data()
     initialize_users(loaded_records)
 
+    # Crear usuario demo si la base está vacía
     if not loaded_records:
         create_user("1", "Usuario Demo", "demo@correo.com", "20", "Activo")
 
     print("Sistema listo")
-    show_users()
+    print_result(True, list_records())
 
     while True:
-        show_menu()
+        show_main_menu()
 
         try:
             option = input("Elige una opción: ").strip()
@@ -60,15 +42,46 @@ def main():
             break
 
         if option == "1":
-            request_user()
+            args = prompt_new_user()
+            ok, msg = new_register(*args)
+            print_result(ok, msg)
+            if ok:
+                save_data(get_users_data())
+
         elif option == "2":
-            show_users()
+            print("\n-- Usuarios registrados --")
+            result = list_records()
+            if not result:
+                print("No hay usuarios registrados aún.")
+            else:
+                print_result(True, result)
+
+        elif option == "3":
+            field, value = prompt_search()
+            ok, result = search_record(field, value)
+            print_result(ok, result)
+
+        elif option == "4":
+            id_input, name, email, age, status = prompt_update()
+            ok, msg = update_record(id_input, name, email, age, status)
+            print_result(ok, msg)
+            if ok:
+                save_data(get_users_data())
+
+        elif option == "5":
+            id_input = prompt_delete()
+            ok, msg = delete_record(id_input)
+            print_result(ok, msg)
+            if ok:
+                save_data(get_users_data())
+
         elif option == "0":
             save_data(get_users_data())
             print("\n¡Hasta luego!")
             break
+
         else:
-            print("\nOpcion no valida. Intenta de nuevo.")
+            print("\nOpción no válida. Intenta de nuevo.")
 
 
 if __name__ == "__main__":
