@@ -1,4 +1,4 @@
-from file import load_data, save_data
+from file import load_data, save_data  
 from service import (
     initialize_users,
     get_users_data,
@@ -9,7 +9,7 @@ from service import (
     delete_record,
     create_user,          # alias — usado solo en demo inicial
 )
-from menu import (
+from menu import (  #import de Menu en main
     show_main_menu,
     prompt_new_user,
     prompt_search,

@@ -1,6 +1,10 @@
+from colorama import Fore, Back, Style, init
+
+init()
+
 def show_main_menu():
-    print("\n" + "=" * 40)
-    print("       SISTEMA DE GESTIÓN DE USUARIOS")
+    print(Fore.BLUE + "\n" + "=" * 40)
+    print(Fore.LIGHTCYAN_EX +"       SISTEMA DE GESTIÓN DE USUARIOS")
     print("=" * 40)
     print("  1. Crear usuario")
     print("  2. Listar usuarios")
@@ -8,7 +12,7 @@ def show_main_menu():
     print("  4. Actualizar usuario")
     print("  5. Eliminar usuario")
     print("  0. Salir")
-    print("=" * 40)
+    print(Fore.BLUE + "=" * 40)
 
 
 def prompt_new_user():
