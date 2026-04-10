@@ -1,2 +1,4 @@
 faker
 colorama
+pytest
+pytest-cov

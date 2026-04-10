@@ -1,3 +1,4 @@
+from typing import List, Tuple, Dict, Any, Optional
 from validate import (
     validate_id,
     validate_name,
@@ -5,14 +6,18 @@ from validate import (
     validate_age,
     validate_status,
 )
+from file import save_data
 
-users = []
-registered_ids = set()
+users: List[Dict[str, Any]] = []
+registered_ids: set = set()
 
-# Inicialización
+def initialize_users(initial_data: List[Dict[str, Any]]) -> None:
+    """
+    Carga la lista de usuarios desde los datos persistidos en memoria.
 
-def initialize_users(initial_data):
-    """Carga la lista de usuarios desde los datos persistidos."""
+    Args:
+        initial_data (List[Dict[str, Any]]): Lista de usuarios obtenida del archivo.
+    """
     users.clear()
     registered_ids.clear()
 
@@ -25,36 +30,50 @@ def initialize_users(initial_data):
             registered_ids.add(user_id)
 
 
-def get_users_data():
-    """Retorna la lista interna de usuarios (para persistir)."""
+def get_users_data() -> List[Dict[str, Any]]:
+    """
+    Retorna la lista interna de usuarios.
+
+    Returns:
+        List[Dict[str, Any]]: Copia o referencia a la lista de usuarios en memoria.
+    """
     return users
 
-# CREATE
 
-def new_register(id, name, email, age, status):
+def new_register(id: Any, name: str, email: str, age: Any, status: str) -> Tuple[bool, str]:
     """
     Crea y registra un nuevo usuario tras validar todos los campos.
-    Retorna (True, mensaje) si tuvo éxito, o (False, error) si no.
+    Guarda automáticamente en disco si tiene éxito.
+
+    Args:
+        id (Any): ID del usuario.
+        name (str): Nombre del usuario.
+        email (str): Correo electrónico.
+        age (Any): Edad.
+        status (str): Estado (Activo/Inactivo).
+
+    Returns:
+        Tuple[bool, str]: Tupla con éxito y mensaje de resultado.
     """
     ok, id_val = validate_id(id, registered_ids)
     if not ok:
-        return False, id_val
+        return False, str(id_val)
 
     ok, name_val = validate_name(name)
     if not ok:
-        return False, name_val
+        return False, str(name_val)
 
     ok, email_val = validate_email(email)
     if not ok:
-        return False, email_val
+        return False, str(email_val)
 
     ok, age_val = validate_age(age)
     if not ok:
-        return False, age_val
+        return False, str(age_val)
 
     ok, status_val = validate_status(status)
     if not ok:
-        return False, status_val
+        return False, str(status_val)
 
     new_user = {
         "id": id_val,
@@ -66,48 +85,51 @@ def new_register(id, name, email, age, status):
 
     users.append(new_user)
     registered_ids.add(id_val)
+    
+    save_data(users)
 
     return True, f"Usuario '{name_val}' creado exitosamente."
 
 
-# Alias para compatibilidad con main.py existente
-def create_user(id, name, email, age, status):
+def create_user(id: Any, name: str, email: str, age: Any, status: str) -> Tuple[bool, str]:
+    """Alias para new_register. Mantenido por compatibilidad."""
     return new_register(id, name, email, age, status)
 
 
-# READ — listar
-
-def list_records():
+def list_records() -> List[str]:
     """
-    Retorna todos los usuarios ordenados por nombre (usando lambda).
-    Retorna lista vacía si no hay registros.
+    Retorna todos los usuarios ordenados por nombre.
+    
+    Returns:
+        List[str]: Lista de cadenas formateadas con el resumen de usuarios.
     """
     if not users:
         return []
 
-    # Lambda para ordenar alfabéticamente por nombre (case-insensitive)
-    sorted_users = sorted(users, key=lambda u: u["name"].lower())
+    sorted_users = sorted(users, key=lambda u: str(u.get("name", "")).lower())
 
     summary = [
-        f"[{u['id']}] {u['name']} | {u['email']} | Edad: {u['age']} | Estado: {u['status']}"
+        f"[{u.get('id')}] {u.get('name')} | {u.get('email')} | Edad: {u.get('age')} | Estado: {u.get('status')}"
         for u in sorted_users
     ]
     return summary
 
 
-# Alias para compatibilidad con main.py existente
-def list_users():
+def list_users() -> List[str]:
+    """Alias para list_records. Mantenido por compatibilidad."""
     return list_records()
 
-# READ — buscar
 
-def search_record(field, value):
+def search_record(field: str, value: str) -> Tuple[bool, Any]:
     """
-    Busca usuarios por campo y valor (búsqueda parcial, case-insensitive).
-    Campos válidos: id, name, email, age, status.
-    Retorna (True, lista_de_resultados) o (False, mensaje_de_error).
+    Busca usuarios por campo y valor (búsqueda parcial, sin importar mayúsculas).
 
-    Usa list comprehension para filtrar.
+    Args:
+        field (str): Campo de búsqueda (ej. id, name, email).
+        value (str): Valor a buscar.
+
+    Returns:
+        Tuple[bool, Any]: Éxito, y una lista de resultados formateados o un mensaje de error.
     """
     valid_fields = {"id", "name", "email", "age", "status"}
 
@@ -119,7 +141,6 @@ def search_record(field, value):
     if not value_str:
         return False, "El valor de búsqueda no puede estar vacío."
 
-    # List comprehension: filtra usuarios donde el campo coincida parcialmente
     results = [
         u for u in users
         if value_str in str(u.get(field, "")).lower()
@@ -129,15 +150,27 @@ def search_record(field, value):
         return False, f"No se encontraron usuarios con {field}='{value}'."
 
     summary = [
-        f"[{u['id']}] {u['name']} | {u['email']} | Edad: {u['age']} | Estado: {u['status']}"
+        f"[{u.get('id')}] {u.get('name')} | {u.get('email')} | Edad: {u.get('age')} | Estado: {u.get('status')}"
         for u in results
     ]
     return True, summary
 
 
-# UPDATE
+def update_record(id: Any, name: Optional[str] = None, email: Optional[str] = None, age: Optional[Any] = None, status: Optional[str] = None) -> Tuple[bool, str]:
+    """
+    Actualiza campos específicos de un usuario existente.
+    Guarda automáticamente si hay cambios.
 
-def update_record(id, name=None, email=None, age=None, status=None):
+    Args:
+        id (Any): ID del usuario.
+        name (Optional[str], optional): Nuevo nombre. Defaults to None.
+        email (Optional[str], optional): Nuevo email. Defaults to None.
+        age (Optional[Any], optional): Nueva edad. Defaults to None.
+        status (Optional[str], optional): Nuevo status. Defaults to None.
+
+    Returns:
+        Tuple[bool, str]: Tupla con éxito y el mensaje descriptivo.
+    """
     try:
         target_id = int(id)
     except (ValueError, TypeError):
@@ -146,8 +179,7 @@ def update_record(id, name=None, email=None, age=None, status=None):
     if target_id not in registered_ids:
         return False, f"No existe ningún usuario con ID {target_id}."
 
-    # Buscar el usuario usando next + lambda (uso real de lambda)
-    user = next((u for u in users if u["id"] == target_id), None)
+    user = next((u for u in users if u.get("id") == target_id), None)
 
     if user is None:
         return False, f"No existe ningún usuario con ID {target_id}."
@@ -157,28 +189,28 @@ def update_record(id, name=None, email=None, age=None, status=None):
     if name is not None:
         ok, name_val = validate_name(name)
         if not ok:
-            return False, name_val
+            return False, str(name_val)
         user["name"] = name_val
         updated_fields.append("name")
 
     if email is not None:
         ok, email_val = validate_email(email)
         if not ok:
-            return False, email_val
+            return False, str(email_val)
         user["email"] = email_val
         updated_fields.append("email")
 
     if age is not None:
         ok, age_val = validate_age(age)
         if not ok:
-            return False, age_val
+            return False, str(age_val)
         user["age"] = age_val
         updated_fields.append("age")
 
     if status is not None:
         ok, status_val = validate_status(status)
         if not ok:
-            return False, status_val
+            return False, str(status_val)
         user["status"] = status_val
         updated_fields.append("status")
 
@@ -186,13 +218,20 @@ def update_record(id, name=None, email=None, age=None, status=None):
         return False, "No se proporcionó ningún campo para actualizar."
 
     fields_str = ", ".join(updated_fields)
+    save_data(users)
     return True, f"Usuario ID {target_id} actualizado correctamente ({fields_str})."
 
 
+def delete_record(id: Any) -> Tuple[bool, str]:
+    """
+    Elimina un usuario por su ID y guarda cambios en disco.
 
-# DELETE
+    Args:
+        id (Any): ID entero (o valor convertible a entero) del usuario.
 
-def delete_record(id):
+    Returns:
+        Tuple[bool, str]: Tupla con éxito y mensaje de resultado.
+    """
     try:
         target_id = int(id)
     except (ValueError, TypeError):
@@ -201,15 +240,15 @@ def delete_record(id):
     if target_id not in registered_ids:
         return False, f"No existe ningún usuario con ID {target_id}."
 
-    # Guardar nombre antes de eliminar (para el mensaje de confirmación)
-    deleted_user = next((u for u in users if u["id"] == target_id), None)
-    deleted_name = deleted_user["name"] if deleted_user else "Desconocido"
+    deleted_user = next((u for u in users if u.get("id") == target_id), None)
+    deleted_name = deleted_user.get("name") if deleted_user else "Desconocido"
 
-    # List comprehension: reconstruye la lista excluyendo el registro eliminado
-    remaining = [u for u in users if u["id"] != target_id]
+    remaining = [u for u in users if u.get("id") != target_id]
 
     users.clear()
     users.extend(remaining)
     registered_ids.discard(target_id)
+    
+    save_data(users)
 
     return True, f"Usuario '{deleted_name}' (ID {target_id}) eliminado exitosamente."

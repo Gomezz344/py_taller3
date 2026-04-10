@@ -19,6 +19,7 @@ import os
 import sys
 import json
 import random
+from typing import Any, Tuple, List, Dict, Optional
 from faker import Faker
 
 # Forzar UTF-8 en la consola de Windows para caracteres especiales
@@ -42,7 +43,7 @@ fake = Faker("es_MX")
 # ─── Generación de registros falsos ───────────────────────────────────
 
 
-def _next_available_id():
+def _next_available_id() -> int:
     """Retorna el siguiente ID entero positivo que no esté en uso."""
     candidate = 1
     while candidate in registered_ids:
@@ -50,7 +51,7 @@ def _next_available_id():
     return candidate
 
 
-def crear_registro(**kwargs):
+def crear_registro(**kwargs: Any) -> Dict[str, str]:
     """
     Construye un dict de usuario a partir de **kwargs.
     Los campos que no se proporcionen se generan automáticamente con Faker.
@@ -62,7 +63,8 @@ def crear_registro(**kwargs):
       age    – int | str
       status – 'Activo' | 'Inactivo'
 
-    Retorna: dict con las llaves {id, name, email, age, status}
+    Returns:
+        Dict[str, str]: Un diccionario con las llaves {id, name, email, age, status}.
     """
     user_id = kwargs.get("id", _next_available_id())
     name    = kwargs.get("name", fake.name())
@@ -79,7 +81,7 @@ def crear_registro(**kwargs):
     }
 
 
-def generar_registros_falsos(*args, **kwargs):
+def generar_registros_falsos(*args: Any, **kwargs: Any) -> Tuple[int, List[str]]:
     """
     Genera y registra N usuarios falsos en el sistema.
 
@@ -91,7 +93,8 @@ def generar_registros_falsos(*args, **kwargs):
       Ejemplo: generar_registros_falsos(5, status="Activo")
                → genera 5 usuarios, todos con estado "Activo".
 
-    Retorna: (cantidad_creados: int, errores: list[str])
+    Returns:
+        Tuple[int, List[str]]: Tupla con (cantidad_creados, errores_list).
     """
     cantidad = args[0] if args else 10
     creados  = 0
@@ -122,19 +125,21 @@ PASS = "✅ PASS"
 FAIL = "❌ FAIL"
 
 
-def banner(title):
+def banner(title: str) -> None:
+    """Imprime un separador con el título en la terminal."""
     print(f"\n{'─' * 45}")
     print(f"  {title}")
     print(f"{'─' * 45}")
 
 
-def check(label, condition):
+def check(label: str, condition: bool) -> bool:
+    """Verifica una condición e imprime PASS/FAIL en consola. Retorna la condición."""
     status = PASS if condition else FAIL
     print(f"  {status}  {label}")
     return condition
 
 
-def test_create():
+def test_create() -> None:
     banner("CREATE — new_register()")
 
     ok, msg = new_register("10", "Ana García", "ana@correo.com", "28", "Activo")
@@ -160,7 +165,7 @@ def test_create():
     check("Estado 'inactivo' (minúscula) normalizado a 'Inactivo'", ok7)
 
 
-def test_list():
+def test_list() -> None:
     banner("LIST — list_records()")
 
     result = list_records()
@@ -172,12 +177,12 @@ def test_list():
     check("Lista ordenada alfabéticamente (lambda)", names_in_result == sorted(names_in_result, key=str.lower))
 
 
-def test_search():
+def test_search() -> None:
     banner("SEARCH — search_record()")
 
     ok, results = search_record("name", "Ana")
     check("Búsqueda por nombre existente retorna True", ok)
-    check("Resultado contiene 'Ana'", any("Ana" in r for r in results))
+    check("Resultado contiene 'Ana'", any("Ana" in str(r) for r in results))
 
     ok2, _ = search_record("name", "ZZZ_inexistente")
     check("Búsqueda sin resultados retorna False", not ok2)
@@ -189,16 +194,16 @@ def test_search():
     check("Búsqueda por status funciona", ok4 and len(results4) > 0)
 
 
-def test_update():
+def test_update() -> None:
     banner("UPDATE — update_record()")
 
     ok, msg = update_record("10", name="Ana López")
     check("Actualizar nombre retorna True", ok)
-    check("Mensaje confirma actualización", "actualizado" in msg.lower())
+    check("Mensaje confirma actualización", "actualizado" in str(msg).lower())
 
     # Verificar que el cambio se refleja en la lista
     records = list_records()
-    check("Cambio reflejado en list_records()", any("Ana López" in r for r in records))
+    check("Cambio reflejado en list_records()", any("Ana López" in str(r) for r in records))
 
     ok2, _ = update_record("999")
     check("ID inexistente retorna False", not ok2)
@@ -210,16 +215,16 @@ def test_update():
     check("Update sin campos retorna False", not ok4)
 
 
-def test_delete():
+def test_delete() -> None:
     banner("DELETE — delete_record()")
 
     ok, msg = delete_record("10")
     check("Eliminar usuario existente retorna True", ok)
-    check("Mensaje confirma eliminación", "eliminado" in msg.lower())
+    check("Mensaje confirma eliminación", "eliminado" in str(msg).lower())
 
     # Verificar que ya no aparece en la lista
     records = list_records()
-    check("Eliminado no aparece en list_records()", not any("[10]" in r for r in records))
+    check("Eliminado no aparece en list_records()", not any("[10]" in str(r) for r in records))
 
     ok2, _ = delete_record("10")
     check("Eliminar ID ya borrado retorna False", not ok2)
@@ -228,7 +233,7 @@ def test_delete():
     check("ID no numérico en delete retorna False", not ok3)
 
 
-def test_persistence():
+def test_persistence() -> None:
     banner("PERSISTENCIA — reflejo en archivo")
 
     save_data(get_users_data())
@@ -243,7 +248,14 @@ def test_persistence():
               all({"id", "name", "email", "age", "status"}.issubset(r.keys()) for r in loaded))
 
 
-def run_all():
+def setup() -> None:
+    """Limpia el archivo de datos y reinicia el estado en memoria."""
+    os.makedirs("data", exist_ok=True)
+    save_data([])
+    initialize_users([])
+
+def run_all() -> None:
+    """Función para correr las pruebas de integración legacy en consola."""
     print("\n" + "=" * 45)
     print("  INTEGRACIÓN CRUD — m3-crud")
     print("=" * 45)

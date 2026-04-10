@@ -103,16 +103,31 @@ creados, errores = generar_registros_falsos(5, status="Activo")
 
 ---
 
-## 🧪 Pruebas de integración
+## 🧪 Pruebas de integración y Unitarias
 
 Ejecutar las pruebas automatizadas:
 
+### Pruebas de Integración (Falsa generación de registros y CRUD básico)
 ```bash
 cd src
 python integration.py
 ```
 
-Verifica las 5 operaciones CRUD y la persistencia en archivo.
+### Ejecutar Pruebas Automatizadas (PyTest)
+Asegúrate de instalar los requerimientos antes:
+```bash
+pip install -r requirements.txt
+```
+
+Luego, corre las pruebas unitarias:
+```bash
+pytest test/tests.py -v
+```
+
+### Cobertura (opcional)
+```bash
+pytest test/tests.py --cov=src --cov-report=term-missing
+```
 
 ---
 
