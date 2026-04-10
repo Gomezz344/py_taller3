@@ -117,9 +117,6 @@ Verifica las 5 operaciones CRUD y la persistencia en archivo.
 ---
 
 ## Créditos/Autores
+Emmanuel Gómez Vélez
 
 Proyecto desarrollado como taller académico.
-
-## Licencia
-
-Información sobre el uso permitido del código.
