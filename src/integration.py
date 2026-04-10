@@ -1,13 +1,29 @@
 """
-integration.py — Pruebas de integración para el módulo CRUD (m3-crud)
+integration.py — Generación de registros falsos con Faker + pruebas de integración
 
-Ejecutar directamente:  python integration.py
-No requiere entrada del usuario. Verifica que las 5 funciones CRUD
-funcionen correctamente y que los cambios se reflejen en el archivo.
+Funcionalidades:
+  1. Generar registros falsos usando la librería Faker (locale es_MX).
+     Se expone como opción del menú principal.
+  2. Pruebas de integración para el módulo CRUD.
+     Ejecutar directamente:  python integration.py
+
+Uso de *args / **kwargs:
+  - crear_registro(**kwargs)  → construye un registro individual.
+    Acepta campos arbitrarios; los que no se proporcionen se generan con Faker.
+  - generar_registros_falsos(*args, **kwargs) → genera N registros.
+    *args[0] = cantidad (por defecto 10).
+    **kwargs = campos fijos que se aplican a todos los registros generados.
 """
 
 import os
+import sys
 import json
+import random
+from faker import Faker
+
+# Forzar UTF-8 en la consola de Windows para caracteres especiales
+if sys.stdout.encoding != "utf-8":
+    sys.stdout.reconfigure(encoding="utf-8")
 from file import load_data, save_data, FILE_PATH
 from service import (
     initialize_users,
@@ -17,7 +33,90 @@ from service import (
     search_record,
     update_record,
     delete_record,
+    registered_ids,
 )
+
+# ─── Configuración de Faker ───────────────────────────────────────────
+fake = Faker("es_MX")
+
+# ─── Generación de registros falsos ───────────────────────────────────
+
+
+def _next_available_id():
+    """Retorna el siguiente ID entero positivo que no esté en uso."""
+    candidate = 1
+    while candidate in registered_ids:
+        candidate += 1
+    return candidate
+
+
+def crear_registro(**kwargs):
+    """
+    Construye un dict de usuario a partir de **kwargs.
+    Los campos que no se proporcionen se generan automáticamente con Faker.
+
+    Parámetros aceptados (todos opcionales):
+      id     – int | str   (se auto-genera si no se envía)
+      name   – str
+      email  – str
+      age    – int | str
+      status – 'Activo' | 'Inactivo'
+
+    Retorna: dict con las llaves {id, name, email, age, status}
+    """
+    user_id = kwargs.get("id", _next_available_id())
+    name    = kwargs.get("name", fake.name())
+    email   = kwargs.get("email", fake.email())
+    age     = kwargs.get("age", random.randint(18, 65))
+    status  = kwargs.get("status", random.choice(["Activo", "Inactivo"]))
+
+    return {
+        "id":     str(user_id),
+        "name":   str(name),
+        "email":  str(email),
+        "age":    str(age),
+        "status": str(status),
+    }
+
+
+def generar_registros_falsos(*args, **kwargs):
+    """
+    Genera y registra N usuarios falsos en el sistema.
+
+    *args:
+      args[0] – cantidad de registros a generar (int, por defecto 10).
+
+    **kwargs:
+      Campos fijos que se aplicarán a TODOS los registros generados.
+      Ejemplo: generar_registros_falsos(5, status="Activo")
+               → genera 5 usuarios, todos con estado "Activo".
+
+    Retorna: (cantidad_creados: int, errores: list[str])
+    """
+    cantidad = args[0] if args else 10
+    creados  = 0
+    errores  = []
+
+    for _ in range(cantidad):
+        registro = crear_registro(**kwargs)
+
+        ok, msg = new_register(
+            registro["id"],
+            registro["name"],
+            registro["email"],
+            registro["age"],
+            registro["status"],
+        )
+
+        if ok:
+            creados += 1
+        else:
+            errores.append(msg)
+
+    return creados, errores
+
+
+# ─── Pruebas de integración ──────────────────────────────────────────
 
 PASS = "✅ PASS"
 FAIL = "❌ FAIL"

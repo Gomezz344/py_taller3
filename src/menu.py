@@ -11,6 +11,7 @@ def show_main_menu():
     print("  3. Buscar usuario")
     print("  4. Actualizar usuario")
     print("  5. Eliminar usuario")
+    print("  6. Generar registros falsos (Faker)")
     print("  0. Salir")
     print(Fore.BLUE + "=" * 40)
 

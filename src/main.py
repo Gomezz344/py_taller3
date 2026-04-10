@@ -17,6 +17,7 @@ from menu import (  #import de Menu en main
     prompt_delete,
     print_result,
 )
+from integration import generar_registros_falsos
 
 
 def main():
@@ -74,6 +75,18 @@ def main():
             print_result(ok, msg)
             if ok:
                 save_data(get_users_data())
+
+        elif option == "6":
+            print("\n-- Generar registros falsos (Faker) --")
+            creados, errores = generar_registros_falsos(10)
+            save_data(get_users_data())
+            print(f"\n✅ Se generaron {creados} registros falsos exitosamente.")
+            if errores:
+                print(f"⚠️  {len(errores)} registro(s) no se pudieron crear:")
+                for err in errores:
+                    print(f"   • {err}")
+            print("\n-- Usuarios actualizados --")
+            print_result(True, list_records())
 
         elif option == "0":
             save_data(get_users_data())
