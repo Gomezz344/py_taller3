@@ -134,13 +134,6 @@ def check(label, condition):
     return condition
 
 
-def setup():
-    """Limpia el archivo de datos y reinicia el estado en memoria."""
-    os.makedirs("data", exist_ok=True)
-    save_data([])
-    initialize_users([])
-
-
 def test_create():
     banner("CREATE — new_register()")
 
